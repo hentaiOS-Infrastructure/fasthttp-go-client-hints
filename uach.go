@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/dunglas/httpsfv"
+	"github.com/valyala/fasthttp"
 )
 
 // Sec-CH-UA field
@@ -110,38 +111,38 @@ var SecondaryBrands = []string{
 //   - Sec-Ch-Ua-Platform-Version
 //
 // If the header does not exist, its value will be the empty string, the number 0, or false.
-func Parse(headers *http.Header) (*ClientHints, error) {
+func Parse(request *fasthttp.RequestHeader) (*ClientHints, error) {
 	// If you can get the full version, use it.
-	chUa := headers.Get(HeaderSecChUaFullVersionList)
-	if chUa == "" {
-		chUa = headers.Get(HeaderSecChUa)
+	chUa := request.Peek(HeaderSecChUaFullVersionList)
+	if len(chUa) == 0 {
+		chUa = request.Peek(HeaderSecChUa)
 	}
-	brand, err := ParseSecChUa(chUa)
+	brand, err := ParseSecChUa(string(chUa))
 	if err != nil {
 		return nil, err
 	}
 
-	platform, err := ParsePlatform(headers.Get(HeaderSecChUaPlatform))
+	platform, err := ParsePlatform(request.Peek(HeaderSecChUaPlatform))
 	if err != nil {
 		return nil, err
 	}
 
-	platformVersion, err := ParseItem(headers.Get(HeaderSecChUaPlatformVersion))
+	platformVersion, err := ParseItem(request.Peek(HeaderSecChUaPlatformVersion))
 	if err != nil {
 		return nil, err
 	}
 
-	isMobile, err := ParseBool(headers.Get(HeaderSecChUaMobile))
+	isMobile, err := ParseBool(request.Peek(HeaderSecChUaMobile))
 	if err != nil {
 		return nil, err
 	}
 
-	arch, err := ParseItem(headers.Get(HeaderSecChUaArch))
+	arch, err := ParseItem(request.Peek(HeaderSecChUaArch))
 	if err != nil {
 		return nil, err
 	}
 
-	bitnessStr, err := ParseItem(headers.Get(HeaderSecChUaBitness))
+	bitnessStr, err := ParseItem(request.Peek(HeaderSecChUaBitness))
 	if err != nil {
 		return nil, err
 	}
@@ -155,12 +156,12 @@ func Parse(headers *http.Header) (*ClientHints, error) {
 		}
 	}
 
-	model, err := ParseItem(headers.Get(HeaderSecChUaModel))
+	model, err := ParseItem(request.Peek(HeaderSecChUaModel))
 	if err != nil {
 		return nil, err
 	}
 
-	fullVersion, err := ParseItem(headers.Get(HeaderSecChUaFullVersion))
+	fullVersion, err := ParseItem(request.Peek(HeaderSecChUaFullVersion))
 	if err != nil {
 		return nil, err
 	}
@@ -232,7 +233,7 @@ func ParseSecChUa(h string) (*Brand, error) {
 }
 
 // Prase the `Sec-CH-UA-Platform` header
-func ParsePlatform(h string) (Platform, error) {
+func ParsePlatform(h []byte) (Platform, error) {
 	platform, err := ParseItem(h)
 	if err != nil {
 		return "", err
@@ -267,12 +268,12 @@ func IsSupportClientHints(headers *http.Header) bool {
 	return chUa != ""
 }
 
-func ParseItem(h string) (string, error) {
-	if h == "" {
+func ParseItem(h []byte) (string, error) {
+	if len(h) == 0 {
 		return "", nil
 	}
 
-	item, err := httpsfv.UnmarshalItem([]string{h})
+	item, err := httpsfv.UnmarshalItem([]string{string(h)})
 	if err != nil {
 		return "", err
 	}
@@ -286,12 +287,12 @@ func ParseItem(h string) (string, error) {
 	return itemStr, nil
 }
 
-func ParseBool(h string) (bool, error) {
-	if h == "" {
+func ParseBool(h []byte) (bool, error) {
+	if len(h) == 0 {
 		return false, nil
 	}
 
-	item, err := httpsfv.UnmarshalItem([]string{h})
+	item, err := httpsfv.UnmarshalItem([]string{string(h)})
 	if err != nil {
 		return false, err
 	}

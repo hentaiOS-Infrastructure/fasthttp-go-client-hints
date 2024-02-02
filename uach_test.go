@@ -5,8 +5,9 @@ import (
 	"net/http"
 	"testing"
 
-	goclienthints "github.com/cateiru/go-client-hints/v2"
+	goclienthints "github.com/hentaiOS-Infrastructure/fasthttp-go-client-hints"
 	"github.com/stretchr/testify/require"
+	"github.com/valyala/fasthttp"
 )
 
 type TestParseCase struct {
@@ -61,7 +62,8 @@ func TestParse(t *testing.T) {
 					Brands: map[string]string{
 						"Google Chrome": "84",
 						"Chromium":      "84",
-					}},
+					},
+				},
 				Platform:        goclienthints.MacOS,
 				PlatformVersion: "11",
 				IsMobile:        false,
@@ -92,7 +94,8 @@ func TestParse(t *testing.T) {
 						"Microsoft Edge":    "92.0.902.73",
 						"Chromium":          "92.0.4515.131",
 						"?Not:Your Browser": "3.1.2.0",
-					}},
+					},
+				},
 				Platform:        goclienthints.MacOS,
 				PlatformVersion: "11",
 				IsMobile:        false,
@@ -134,7 +137,14 @@ func TestParse(t *testing.T) {
 
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("Case %d", i), func(t *testing.T) {
-			clientHints, err := goclienthints.Parse(&c.Header)
+			req := &fasthttp.Request{}
+
+			for key, values := range c.Header {
+				for _, value := range values {
+					req.Header.Add(key, value)
+				}
+			}
+			clientHints, err := goclienthints.Parse(&req.Header)
 
 			if c.IsSuccess {
 				require.NoError(t, err)
@@ -269,7 +279,7 @@ func TestParsePlatform(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.Value, func(t *testing.T) {
-			p, err := goclienthints.ParsePlatform(c.Value)
+			p, err := goclienthints.ParsePlatform([]byte(c.Value))
 
 			if c.IsSuccess {
 				require.NoError(t, err)
@@ -319,7 +329,7 @@ func TestParseItem(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.Value, func(t *testing.T) {
-			item, err := goclienthints.ParseItem(c.Value)
+			item, err := goclienthints.ParseItem([]byte(c.Value))
 
 			if c.IsSuccess {
 				require.NoError(t, err)
@@ -356,7 +366,7 @@ func TestParseBool(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.Value, func(t *testing.T) {
-			s, err := goclienthints.ParseBool(c.Value)
+			s, err := goclienthints.ParseBool([]byte(c.Value))
 
 			if c.IsSuccess {
 				require.NoError(t, err)

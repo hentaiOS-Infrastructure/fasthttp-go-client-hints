@@ -2,13 +2,13 @@ package example
 
 import (
 	"fmt"
-	"net/http"
 
-	clienthint "github.com/cateiru/go-client-hints/v2"
+	clienthint "github.com/hentaiOS-Infrastructure/fasthttp-go-client-hints"
+	"github.com/valyala/fasthttp"
 )
 
-func Handler(w http.ResponseWriter, r *http.Request) {
-	clientHints, err := clienthint.Parse(&r.Header)
+func Handler(ctx *fasthttp.RequestCtx) {
+	clientHints, err := clienthint.Parse(&ctx.Request.Header)
 	if err != nil {
 		return
 	}
