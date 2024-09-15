@@ -137,14 +137,14 @@ func TestParse(t *testing.T) {
 
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("Case %d", i), func(t *testing.T) {
-			req := &fasthttp.Request{}
+			req := &fasthttp.RequestCtx{}
 
 			for key, values := range c.Header {
 				for _, value := range values {
-					req.Header.Add(key, value)
+					req.Request.Header.Add(key, value)
 				}
 			}
-			clientHints, err := goclienthints.Parse(&req.Header)
+			clientHints, err := goclienthints.Parse(req)
 
 			if c.IsSuccess {
 				require.NoError(t, err)
@@ -292,15 +292,13 @@ func TestParsePlatform(t *testing.T) {
 }
 
 func TestIsClientHints(t *testing.T) {
-	supportClientHintHeader := http.Header{
-		"Sec-Ch-Ua": {`"Chrome"; v="74", ";Not)Your=Browser"; v="13"`},
-	}
-	noSupportClientHintHeader := http.Header{}
-
-	isSupport := goclienthints.IsSupportClientHints(&supportClientHintHeader)
+	ctx := &fasthttp.RequestCtx{}
+	ctx.Request.Header.Set("Sec-Ch-Ua", `"Chrome"; v="74", ";Not)Your=Browser"; v="13"`)
+	isSupport := goclienthints.IsSupportClientHints(ctx)
 	require.True(t, isSupport)
 
-	isSupport = goclienthints.IsSupportClientHints(&noSupportClientHintHeader)
+	ctx = &fasthttp.RequestCtx{} // New context without the header
+	isSupport = goclienthints.IsSupportClientHints(ctx)
 	require.False(t, isSupport)
 }
 

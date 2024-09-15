@@ -14,13 +14,13 @@ go get -u github.com/hentaiOS-Infrastructure/fasthttp-go-client-hints
 ```go
 import (
  "fmt"
- "net/http"
+ "github.com/valyala/fasthttp"
 
  goclienthints "github.com/hentaiOS-Infrastructure/fasthttp-go-client-hints"
 )
 
 func Handler(ctx *fasthttp.RequestCtx) {
- clientHints, err := clienthint.Parse(&ctx.Request.Header)
+ clientHints, err := clienthint.Parse(ctx)
  if err != nil {
   return
  }
@@ -58,13 +58,13 @@ func Handler(ctx *fasthttp.RequestCtx) {
 
 ```go
 import (
- "net/http"
+ "github.com/valyala/fasthttp"
 
  clienthint "github.com/hentaiOS-Infrastructure/fasthttp-go-client-hints"
 )
 
-func Handler2(w http.ResponseWriter, r *http.Request) {
- isSupport := clienthint.IsSupportClientHints(&r.Header)
+func Handler2(ctx *fasthttp.RequestCtx) {
+ isSupport := clienthint.IsSupportClientHints(ctx)
 
  if isSupport {
   // ...do something

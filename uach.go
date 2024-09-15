@@ -2,7 +2,6 @@ package goclienthints
 
 import (
 	"errors"
-	"net/http"
 	"strconv"
 	"strings"
 
@@ -12,9 +11,9 @@ import (
 
 // Sec-CH-UA field
 type Brand struct {
+	Brands       map[string]string `json:"brands,omitempty"`
 	Brand        string            `json:"brand,omitempty"`
 	BrandVersion string            `json:"brand_version,omitempty"`
-	Brands       map[string]string `json:"brands,omitempty"`
 }
 
 type ClientHints struct {
@@ -111,38 +110,38 @@ var SecondaryBrands = []string{
 //   - Sec-Ch-Ua-Platform-Version
 //
 // If the header does not exist, its value will be the empty string, the number 0, or false.
-func Parse(request *fasthttp.RequestHeader) (*ClientHints, error) {
+func Parse(ctx *fasthttp.RequestCtx) (*ClientHints, error) {
 	// If you can get the full version, use it.
-	chUa := request.Peek(HeaderSecChUaFullVersionList)
+	chUa := ctx.Request.Header.Peek(HeaderSecChUaFullVersionList)
 	if len(chUa) == 0 {
-		chUa = request.Peek(HeaderSecChUa)
+		chUa = ctx.Request.Header.Peek(HeaderSecChUa)
 	}
 	brand, err := ParseSecChUa(string(chUa))
 	if err != nil {
 		return nil, err
 	}
 
-	platform, err := ParsePlatform(request.Peek(HeaderSecChUaPlatform))
+	platform, err := ParsePlatform(ctx.Request.Header.Peek(HeaderSecChUaPlatform))
 	if err != nil {
 		return nil, err
 	}
 
-	platformVersion, err := ParseItem(request.Peek(HeaderSecChUaPlatformVersion))
+	platformVersion, err := ParseItem(ctx.Request.Header.Peek(HeaderSecChUaPlatformVersion))
 	if err != nil {
 		return nil, err
 	}
 
-	isMobile, err := ParseBool(request.Peek(HeaderSecChUaMobile))
+	isMobile, err := ParseBool(ctx.Request.Header.Peek(HeaderSecChUaMobile))
 	if err != nil {
 		return nil, err
 	}
 
-	arch, err := ParseItem(request.Peek(HeaderSecChUaArch))
+	arch, err := ParseItem(ctx.Request.Header.Peek(HeaderSecChUaArch))
 	if err != nil {
 		return nil, err
 	}
 
-	bitnessStr, err := ParseItem(request.Peek(HeaderSecChUaBitness))
+	bitnessStr, err := ParseItem(ctx.Request.Header.Peek(HeaderSecChUaBitness))
 	if err != nil {
 		return nil, err
 	}
@@ -156,12 +155,12 @@ func Parse(request *fasthttp.RequestHeader) (*ClientHints, error) {
 		}
 	}
 
-	model, err := ParseItem(request.Peek(HeaderSecChUaModel))
+	model, err := ParseItem(ctx.Request.Header.Peek(HeaderSecChUaModel))
 	if err != nil {
 		return nil, err
 	}
 
-	fullVersion, err := ParseItem(request.Peek(HeaderSecChUaFullVersion))
+	fullVersion, err := ParseItem(ctx.Request.Header.Peek(HeaderSecChUaFullVersion))
 	if err != nil {
 		return nil, err
 	}
@@ -262,8 +261,8 @@ func ParsePlatform(h []byte) (Platform, error) {
 // Determines if ClientHint is supported.
 //
 // It is determined by the presence or absence of the `Sec-Ch-Ua` header.
-func IsSupportClientHints(headers *http.Header) bool {
-	chUa := headers.Get(HeaderSecChUa)
+func IsSupportClientHints(ctx *fasthttp.RequestCtx) bool {
+	chUa := string(ctx.Request.Header.Peek(HeaderSecChUa))
 
 	return chUa != ""
 }

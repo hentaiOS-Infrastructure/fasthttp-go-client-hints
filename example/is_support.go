@@ -1,13 +1,12 @@
 package example
 
 import (
-	"net/http"
-
 	clienthint "github.com/hentaiOS-Infrastructure/fasthttp-go-client-hints"
+	"github.com/valyala/fasthttp"
 )
 
-func Handler2(w http.ResponseWriter, r *http.Request) {
-	isSupport := clienthint.IsSupportClientHints(&r.Header)
+func Handler2(ctx *fasthttp.RequestCtx) {
+	isSupport := clienthint.IsSupportClientHints(ctx)
 
 	if isSupport {
 		// ...do something

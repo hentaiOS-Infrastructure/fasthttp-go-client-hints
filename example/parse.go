@@ -8,7 +8,7 @@ import (
 )
 
 func Handler(ctx *fasthttp.RequestCtx) {
-	clientHints, err := clienthint.Parse(&ctx.Request.Header)
+	clientHints, err := clienthint.Parse(ctx)
 	if err != nil {
 		return
 	}
